@@ -5,3 +5,4 @@
 - pySerial
 - pygame 1.9.6
 
+![preview image of game](LabWindowGallaga/pic.PNG)
