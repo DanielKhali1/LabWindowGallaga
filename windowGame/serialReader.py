@@ -1,46 +1,52 @@
 import serial
 import pygame
 import random
+import threading
+
 
 pygame.init()
 gameDisplay = pygame.display.set_mode((800,600))
 pygame.display.set_caption('windowBoi')
 clock = pygame.time.Clock()
-
-crashed = False
-
-rect = pygame.rect.Rect((400, 525, 25, 25))
-pygame.draw.rect(gameDisplay, (0, 200, 0), (64, 54, 18, 18))
-
-scoreVal = 0
-
-largeText = pygame.font.Font('freesansbold.ttf',30)
-score = largeText.render('Score: 0', True, (255, 255, 255))
-
-heartImg = pygame.image.load('heart.png')
-heartImg = pygame.transform.scale(heartImg, (60, 60))
-
-
 currentAction = 0
-#ser = serial.Serial('/dev/tty.usbserial-A5027LAV')
+#ser = serial.Serial('/dev/tty.usbmodem14101')
 #ser.flushInput()
 
-moveLeft = False
-moveRight = False
+move = 0
 
 bulletSpeed = 15
 starSpeed = 20
 enemyBulletSpeed = 5
 
-enemySpawnChance = 0.01
 
-textrect = score.get_rect()
-textrect.move_ip(550, 30)
+
+def takeInput():
+
+    global move
+    try:
+        #ser_bytes = ser.readline()
+        #decoded_bytes = int(ser_bytes[1])
+        #print(decoded_bytes)
+        decoded_bytes = int(random.random()*4)
+
+        if decoded_bytes == 1:
+            move += 1
+        elif decoded_bytes == 3:
+            move += 3
+        elif decoded_bytes == 2:
+            move += 2
+        else:
+            move += 0
+    except:
+        move += 0
+
+    #print("I'm working")
+    #print(move)
 
 class Bullet:
 
     def __init__(self, posx, posy, speed):
-            rect = pygame.rect.Rect((posx+10, posy, 4, 25))
+            rect = pygame.rect.Rect((posx+30, posy, 4, 25))
             self.rect = pygame.draw.rect(gameDisplay, (0, 250, 0), (posx+10, posy, 4, 25))
             self.speed = speed
 
@@ -113,7 +119,7 @@ enemies = []
 
 
 def shoot():
-    bullets.append(Bullet(rect.left, rect.top, bulletSpeed))
+    bullets.append(Bullet(rect.left+14, rect.top, bulletSpeed))
 
 def starSpawn():
     stars.append(Star(random.random()*800, 0, starSpeed))
@@ -122,12 +128,80 @@ def enemySpawn():
     enemies.append(Enemy(random.random()*700+50, 0, random.random()*100 + 100))
 
 
+
+
+crashed = False
+
+
+spaceShip = pygame.image.load('SpaceShip.png')
+spaceShip = pygame.transform.scale(spaceShip, (50, 50))
+
+rect = pygame.rect.Rect((400, 525, 25, 25))
+pygame.draw.rect(gameDisplay, (0, 0, 0), (64, 54, 18, 18))
+
+scoreVal = 0
+
+largeText = pygame.font.Font('freesansbold.ttf',30)
+score = largeText.render('Score: 0', True, (255, 255, 255))
+
+heartImg = pygame.image.load('heart.png')
+heartImg = pygame.transform.scale(heartImg, (60, 60))
+
+
+moveLeft = False
+moveRight = False
+
+
+enemySpawnChance = 0.06
+
+textrect = score.get_rect()
+textrect.move_ip(550, 30)
+
+#print "3"
+
+
+
+
+
+crashed = False
 while not crashed:
     events = pygame.event.get()
 
+    #print("Not Moving")
+
+    #decoded_bytes = float(ser_bytes[0:len(ser_bytes)-2].decode("utf-8"))
+    #decoded_bytes = 0
+    #decoded_bytes = None
+
+
+    #print(ser_bytes[1])
+
+
+
+    #print("Moving")
+    move = 0
+    print(move)
+    t1 = threading.Thread(target=takeInput, args=())
+    t1.start()
+    t1.join()
+    print(move)
+
+
+
+    if(move == 1 and rect.left > 0):
+        rect.move_ip(-7, 0)
+    elif(move == 2 ):
+        shoot()
+    elif(move == 3 and rect.left < 775):
+        rect.move_ip(7,0)
+
+
+
     for event in events:
         if event.type == pygame.QUIT:
+                t1.kill()
                 crashed = True
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_a:
                 moveLeft = True
@@ -215,22 +289,10 @@ while not crashed:
 
 
 
-    pygame.draw.rect(gameDisplay, (0, 200, 0), rect)
-    ##try:
-    ##    ser_bytes = ser.readline()
-    ##    decoded_bytes = float(ser_bytes[0:len(ser_bytes)-2].decode("utf-8"))
-##
-##        if decoded_bytes == 3:
-##            rect.move_ip(-5, 0)
-##        elif decoded_bytes == 8:
-##            rect.move_ip(5, 0)
-##        else:
-##            rect.move_ip(0, 0)
-##
-##        print(decoded_bytes)
-##    except:
-##        print("Keyboard Interrupt")
-##        break
+    pygame.draw.rect(gameDisplay, (0, 0, 0), rect)
+    gameDisplay.blit(spaceShip, (rect.left, rect.top))
+
+
 
     pygame.display.update()
 
@@ -239,3 +301,10 @@ while not crashed:
 pygame.display.quit()
 pygame.quit()
 exit()
+t1.kill()
+
+
+#print "1"
+#t2 = threading.Thread(target=gameLoop, args=())
+#print "2"
+#t2.start()
