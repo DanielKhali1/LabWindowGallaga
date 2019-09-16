@@ -9,8 +9,8 @@ gameDisplay = pygame.display.set_mode((800,600))
 pygame.display.set_caption('windowBoi')
 clock = pygame.time.Clock()
 currentAction = 0
-#ser = serial.Serial('/dev/tty.usbmodem14101')
-#ser.flushInput()
+ser = serial.Serial('/dev/tty.usbmodem14101')
+ser.flushInput()
 
 move = 0
 
@@ -46,10 +46,13 @@ moveLeft = False
 moveRight = False
 
 
-enemySpawnChance = 0.03
+enemySpawnChance = 0.01
 
 scoreText = pygame.font.Font('freesansbold.ttf', 20)
 killedEnemy = scoreText.render('+10', True, (255, 247, 0))
+
+hurtText = pygame.font.Font('freesansbold.ttf', 25)
+wasHurtTextRender = scoreText.render('- <3', True, (255, 0, 0))
 
 
 largeText = pygame.font.Font('freesansbold.ttf',30)
@@ -64,22 +67,31 @@ textrect.move_ip(550, 30)
 def takeInput():
 
     global move
-    try:
-        #ser_bytes = ser.readline()
-        #decoded_bytes = int(ser_bytes[1])
-        #print(decoded_bytes)
-        decoded_bytes = int(random.random()*4)
+    global crashed
 
-        if decoded_bytes == 1:
-            move += 1
-        elif decoded_bytes == 3:
-            move += 3
-        elif decoded_bytes == 2:
-            move += 2
-        else:
-            move += 0
-    except:
-        move += 0
+    while not crashed:
+
+        try:
+            ser_bytes = ser.readline()
+        #    print(ser_bytes)
+            decoded_bytes = int(ser_bytes[1])
+
+
+        #    print(decode_bytes)
+            #decoded_bytes = int(random.random()*4)
+
+            if decoded_bytes == 1:
+                move = 1
+            elif decoded_bytes == 3:
+                move = 3
+            elif decoded_bytes == 2:
+                move = 2
+            else:
+                move = 0
+        except:
+            move = 0
+
+        #print move
 
     #print("I'm working")
     #print(move)
@@ -158,6 +170,7 @@ bullets = []
 stars = []
 enemies = []
 points = []
+hurtText = []
 
 
 def shoot():
@@ -174,179 +187,177 @@ def enemySpawn():
 
 
 
+t1 = threading.Thread(target=takeInput, args=())
+t1.start()
+#t1.join()
+dead = False
 
 
-crashed = False
 while not crashed:
     events = pygame.event.get()
 
-    #print("Not Moving")
 
-    #decoded_bytes = float(ser_bytes[0:len(ser_bytes)-2].decode("utf-8"))
-    #decoded_bytes = 0
-    #decoded_bytes = None
+    if(not dead):
 
+        global move
+        print move
 
-    #print(ser_bytes[1])
-
-
-
-    #print("Moving")
-    move = 0
-    #print(move)
-    t1 = threading.Thread(target=takeInput, args=())
-    t1.start()
-    t1.join()
-    #print(move)
+        if(move == 1 and rect.left > 0):
+            rect.move_ip(-7, 0)
+        elif(move == 2 ):
+            shoot()
+            move = 0
+        elif(move == 3 and rect.left < 775):
+            rect.move_ip(7,0)
 
 
 
-    if(move == 1 and rect.left > 0):
-        rect.move_ip(-7, 0)
-    elif(move == 2 ):
-        shoot()
-    elif(move == 3 and rect.left < 775):
-        rect.move_ip(7,0)
+        for event in events:
+            if event.type == pygame.QUIT:
+                    crashed = True
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_a:
+                    moveLeft = True
+                if event.key == pygame.K_d:
+                    moveRight = True
+                if event.key == pygame.K_SPACE:
+                    shoot()
+
+
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_a:
+                    moveLeft = False
+                if event.key == pygame.K_d:
+                    moveRight = False
+
+        if(0.3 > random.random() and len(stars) < 10):
+            starSpawn()
 
 
 
-    for event in events:
-        if event.type == pygame.QUIT:
-                t1.kill()
-                crashed = True
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_a:
-                moveLeft = True
-            if event.key == pygame.K_d:
-                moveRight = True
-            if event.key == pygame.K_SPACE:
-                shoot()
-
-
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_a:
-                moveLeft = False
-            if event.key == pygame.K_d:
-                moveRight = False
-
-    if(0.3 > random.random() and len(stars) < 10):
-        starSpawn()
+        if(moveLeft and rect.left > 0):
+            rect.move_ip(-7, 0)
+        elif(moveRight and rect.left < 775):
+            rect.move_ip(7, 0)
 
 
 
-    if(moveLeft and rect.left > 0):
-        rect.move_ip(-7, 0)
-    elif(moveRight and rect.left < 775):
-        rect.move_ip(7, 0)
+        gameDisplay.fill((0, 0, 0))
 
 
-
-    gameDisplay.fill((0, 0, 0))
-
-
-    if(enemySpawnChance >= random.random() and len(enemies) < 20):
-        enemySpawn()
+        if(enemySpawnChance >= random.random() and len(enemies) < 20):
+            enemySpawn()
 
 
-    for bullet in bullets:
-        bullet.move()
-        pygame.draw.rect(gameDisplay,(0, 250, 0), bullet.rect)
-
-        if(bullet.rect.top < 0):
-            bullets.remove(bullet)
-            del bullet
-            continue
-
-    for eBullet in enemybullets:
-        eBullet.move()
-        pygame.draw.rect(gameDisplay,(255, 0, 0), eBullet.rect)
-        if(eBullet.rect.top > 600):
-            enemybullets.remove(eBullet)
-            del eBullet
-            continue
-
-        if(eBullet.rect.left < rect.left+35 and eBullet.rect.left+5 > rect.left and eBullet.rect.top < rect.top+35 and eBullet.rect.top > rect.top):
-            #hurt player
-
-            health -= 1
-
-            enemybullets.remove(eBullet)
-            del eBullet
-            continue
-
-    for enemy in enemies:
-        continued = False
         for bullet in bullets:
-            if(bullet.rect.left < enemy.rect.left+35 and bullet.rect.left+5 > enemy.rect.left and bullet.rect.top < enemy.rect.top+35 and bullet.rect.top > enemy.rect.top):
-                temprect = killedEnemy.get_rect().move(enemy.rect.left, enemy.rect.top)
-                points.append(temprect)
+            bullet.move()
+            pygame.draw.rect(gameDisplay,(0, 250, 0), bullet.rect)
+
+            if(bullet.rect.top < 0):
                 bullets.remove(bullet)
                 del bullet
-                scoreVal += 10
-                score = largeText.render('Score: '+str(scoreVal), True, (255, 255, 255))
-                enemies.remove(enemy)
-                del enemy
-                continued = True
-                break
-        if(continued):
-            continue
+                continue
 
-        enemy.step()
-        gameDisplay.blit(badGuy, (enemy.rect.left, enemy.rect.top))
+        for eBullet in enemybullets:
+            eBullet.move()
+            pygame.draw.rect(gameDisplay,(255, 0, 0), eBullet.rect)
+            if(eBullet.rect.top > 600):
+                enemybullets.remove(eBullet)
+                del eBullet
+                continue
 
-        #pygame.draw.rect(gameDisplay,(0, 0, 0), enemy.rect)
+            if(eBullet.rect.left < rect.left+35 and eBullet.rect.left+5 > rect.left and eBullet.rect.top < rect.top+35 and eBullet.rect.top > rect.top):
+                #hurt player
 
-    for point in points:
-        #move up
-        point.move_ip(0, -3)
-        gameDisplay.blit(killedEnemy, point)
-        #if too high kill
-        if(point.top < 0):
-            points.remove(point)
-            del point
-            continue
+                health -= 1
+                temprect = wasHurtTextRender.get_rect().move(rect.left, rect.top)
+                hurtText.append(temprect)
 
 
+                enemybullets.remove(eBullet)
+                del eBullet
+                continue
 
-    for star in stars:
-        star.move()
-        if(star.rect.top > 600):
-            star.rect.move_ip(0, -620)
-            #stars.remove(star)
-            #del star
-            #break
+        for enemy in enemies:
+            continued = False
+            for bullet in bullets:
+                if(bullet.rect.left < enemy.rect.left+35 and bullet.rect.left+5 > enemy.rect.left and bullet.rect.top < enemy.rect.top+35 and bullet.rect.top > enemy.rect.top):
+                    temprect = killedEnemy.get_rect().move(enemy.rect.left, enemy.rect.top)
+                    points.append(temprect)
+                    bullets.remove(bullet)
+                    del bullet
+                    scoreVal += 10
+                    score = largeText.render('Score: '+str(scoreVal), True, (255, 255, 255))
+                    enemies.remove(enemy)
+                    del enemy
+                    continued = True
+                    break
+            if(continued):
+                continue
 
-        pygame.draw.rect(gameDisplay,(255, 255, 255), star.rect)
+            enemy.step()
+            gameDisplay.blit(badGuy, (enemy.rect.left, enemy.rect.top))
 
-    gameDisplay.blit(score, textrect)
+            #pygame.draw.rect(gameDisplay,(0, 0, 0), enemy.rect)
 
-    if health > 0:
-        gameDisplay.blit(heartImg, (30, 15))
-    else:
-        crashed = True
-        print("Player Died")
-    if health > 1:
-        gameDisplay.blit(heartImg, (70, 15))
-    if health > 2:
-        gameDisplay.blit(heartImg, (110, 15))
+        for point in points:
+            #move up
+            point.move_ip(0, -3)
+            gameDisplay.blit(killedEnemy, point)
+            #if too high kill
+            if(point.top < 0):
+                points.remove(point)
+                del point
+                continue
+
+        for text in hurtText:
+            #move up
+            text.move_ip(0, -3)
+            gameDisplay.blit(wasHurtTextRender, text)
+            #if too high kill
+            if(text.top < 0):
+                hurtText.remove(text)
+                del text
+                continue
+
+
+        for star in stars:
+            star.move()
+            if(star.rect.top > 600):
+                star.rect.move_ip(0, -620)
+                #stars.remove(star)
+                #del star
+                #break
+
+            pygame.draw.rect(gameDisplay,(255, 255, 255), star.rect)
+
+        gameDisplay.blit(score, textrect)
+
+        if health > 0:
+            gameDisplay.blit(heartImg, (30, 15))
+        else:
+            crashed = True
+            dead = True
+            print("Player Died")
+        if health > 1:
+            gameDisplay.blit(heartImg, (70, 15))
+        if health > 2:
+            gameDisplay.blit(heartImg, (110, 15))
 
 
 
-    pygame.draw.rect(gameDisplay, (0, 0, 0), rect)
-    gameDisplay.blit(spaceShip, (rect.left, rect.top))
+        pygame.draw.rect(gameDisplay, (0, 0, 0), rect)
+        gameDisplay.blit(spaceShip, (rect.left, rect.top))
 
+        pygame.display.update()
 
-
-    pygame.display.update()
-
-    clock.tick(40)
+        clock.tick(40)
 
 pygame.display.quit()
 pygame.quit()
 exit()
-t1.kill()
-
+t1.join()
 
 #print "1"
 #t2 = threading.Thread(target=gameLoop, args=())
