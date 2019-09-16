@@ -18,6 +18,47 @@ bulletSpeed = 15
 starSpeed = 20
 enemyBulletSpeed = 5
 
+health = 3
+
+
+
+
+crashed = False
+
+
+spaceShip = pygame.image.load('SpaceShip.png')
+spaceShip = pygame.transform.scale(spaceShip, (50, 50))
+
+rect = pygame.rect.Rect((400, 525, 25, 25))
+pygame.draw.rect(gameDisplay, (0, 0, 0), (64, 54, 18, 18))
+
+scoreVal = 0
+
+
+heartImg = pygame.image.load('heart.png')
+heartImg = pygame.transform.scale(heartImg, (60, 60))
+
+badGuy = pygame.image.load('badGuy.png')
+badGuy = pygame.transform.scale(badGuy, (40, 40))
+
+
+moveLeft = False
+moveRight = False
+
+
+enemySpawnChance = 0.03
+
+scoreText = pygame.font.Font('freesansbold.ttf', 20)
+killedEnemy = scoreText.render('+10', True, (255, 247, 0))
+
+
+largeText = pygame.font.Font('freesansbold.ttf',30)
+score = largeText.render('Score: 0', True, (255, 255, 255))
+textrect = score.get_rect()
+textrect.move_ip(550, 30)
+
+#print "3"
+
 
 
 def takeInput():
@@ -116,6 +157,7 @@ enemybullets = []
 bullets = []
 stars = []
 enemies = []
+points = []
 
 
 def shoot():
@@ -129,35 +171,6 @@ def enemySpawn():
 
 
 
-
-crashed = False
-
-
-spaceShip = pygame.image.load('SpaceShip.png')
-spaceShip = pygame.transform.scale(spaceShip, (50, 50))
-
-rect = pygame.rect.Rect((400, 525, 25, 25))
-pygame.draw.rect(gameDisplay, (0, 0, 0), (64, 54, 18, 18))
-
-scoreVal = 0
-
-largeText = pygame.font.Font('freesansbold.ttf',30)
-score = largeText.render('Score: 0', True, (255, 255, 255))
-
-heartImg = pygame.image.load('heart.png')
-heartImg = pygame.transform.scale(heartImg, (60, 60))
-
-
-moveLeft = False
-moveRight = False
-
-
-enemySpawnChance = 0.06
-
-textrect = score.get_rect()
-textrect.move_ip(550, 30)
-
-#print "3"
 
 
 
@@ -180,11 +193,11 @@ while not crashed:
 
     #print("Moving")
     move = 0
-    print(move)
+    #print(move)
     t1 = threading.Thread(target=takeInput, args=())
     t1.start()
     t1.join()
-    print(move)
+    #print(move)
 
 
 
@@ -253,22 +266,47 @@ while not crashed:
             del eBullet
             continue
 
+        if(eBullet.rect.left < rect.left+35 and eBullet.rect.left+5 > rect.left and eBullet.rect.top < rect.top+35 and eBullet.rect.top > rect.top):
+            #hurt player
+
+            health -= 1
+
+            enemybullets.remove(eBullet)
+            del eBullet
+            continue
+
     for enemy in enemies:
         continued = False
         for bullet in bullets:
             if(bullet.rect.left < enemy.rect.left+35 and bullet.rect.left+5 > enemy.rect.left and bullet.rect.top < enemy.rect.top+35 and bullet.rect.top > enemy.rect.top):
+                temprect = killedEnemy.get_rect().move(enemy.rect.left, enemy.rect.top)
+                points.append(temprect)
+                bullets.remove(bullet)
+                del bullet
                 scoreVal += 10
                 score = largeText.render('Score: '+str(scoreVal), True, (255, 255, 255))
                 enemies.remove(enemy)
                 del enemy
                 continued = True
                 break
-
         if(continued):
             continue
 
         enemy.step()
-        pygame.draw.rect(gameDisplay,(255, 0, 0), enemy.rect)
+        gameDisplay.blit(badGuy, (enemy.rect.left, enemy.rect.top))
+
+        #pygame.draw.rect(gameDisplay,(0, 0, 0), enemy.rect)
+
+    for point in points:
+        #move up
+        point.move_ip(0, -3)
+        gameDisplay.blit(killedEnemy, point)
+        #if too high kill
+        if(point.top < 0):
+            points.remove(point)
+            del point
+            continue
+
 
 
     for star in stars:
@@ -283,9 +321,15 @@ while not crashed:
 
     gameDisplay.blit(score, textrect)
 
-    gameDisplay.blit(heartImg, (30, 15))
-    gameDisplay.blit(heartImg, (70, 15))
-    gameDisplay.blit(heartImg, (110, 15))
+    if health > 0:
+        gameDisplay.blit(heartImg, (30, 15))
+    else:
+        crashed = True
+        print("Player Died")
+    if health > 1:
+        gameDisplay.blit(heartImg, (70, 15))
+    if health > 2:
+        gameDisplay.blit(heartImg, (110, 15))
 
 
 
