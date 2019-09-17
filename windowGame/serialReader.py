@@ -4,6 +4,8 @@ import random
 import threading
 
 
+# delay shooting
+
 
 ## PYGAME SET UP ##
 pygame.init()
@@ -12,8 +14,8 @@ pygame.display.set_caption('GALLAGA CLONE')
 clock = pygame.time.Clock()
 
 #SETS UP SERIAL INPUT /CHANGE PER USB PORT
-#ser = serial.Serial('/dev/tty.usbmodem14101')
-#ser.flushInput()
+ser = serial.Serial('/dev/tty.usbserial-A5027LAV')
+ser.flushInput()
 
 
 # PLAYER RECT OBJECT
@@ -30,6 +32,7 @@ move = 0
 health = 3
 scoreVal = 0
 #change these variables to desired gameplay
+numBulletsOutAtTime = 5
 bulletSpeed = 15
 starSpeed = 20
 enemyBulletSpeed = 5
@@ -72,6 +75,7 @@ textrect.move_ip(550, 30)
 dead = False
 moveLeft = False
 moveRight = False
+global crashed
 crashed = False
 #------------_________-------------#
 
@@ -164,7 +168,7 @@ def takeInput():
     #grabbing the global variable move
     global move
     #grabbing the global variable crashed
-    global crashed
+    #global crashed
 
     #while the game is still playing
     while not crashed:
@@ -172,17 +176,18 @@ def takeInput():
         try:
             #read serial input in
             ser_bytes = ser.readline()
+            print ser_bytes
             #weird ser input so just taking the 2nd character from the serial input line
-            decoded_bytes = int(ser_bytes[1])
+            decoded_bytes = int(ser_bytes)
 
             #if serial input = 1 then move = 1
-            if decoded_bytes == 1:
+            if decoded_bytes == 3:
                 move = 1
             #if serial input = 3 then move = 3
-            elif decoded_bytes == 3:
+            elif decoded_bytes == 8:
                 move = 3
             #if serial input = 2 then move = 2
-            elif decoded_bytes == 2:
+            elif decoded_bytes == 5 or decoded_bytes == 4 or decoded_bytes == 6 or decoded_bytes == 3:
                 move = 2
             #else move = 0
             else:
@@ -199,7 +204,9 @@ def takeInput():
 # spawns a bullet at players position
 # adds bullet to bullet list
 def shoot():
-    bullets.append(Bullet(rect.left+14, rect.top, bulletSpeed))
+    #limit the number of bullets out at one time
+    if(len(bullets) < numBulletsOutAtTime):
+        bullets.append(Bullet(rect.left+14, rect.top, bulletSpeed))
 
 #spawns a star in a random x position at the top of the screen
 #adds star to the star list
@@ -243,6 +250,7 @@ while not crashed:
         if(move == 1 and rect.left > 0):
             # moves the player 7 pixels to the left
             rect.move_ip(-7, 0)
+            move = 0
         #if the move is equal to 2
         elif(move == 2 ):
             #shoot a bullet
@@ -252,6 +260,7 @@ while not crashed:
         elif(move == 3 and rect.left < 775):
             # moves the player 7 pixels to the right
             rect.move_ip(7,0)
+            move = 0
 
 
         #runs through each active event in the list of events per frame
@@ -488,6 +497,9 @@ while not crashed:
     else:
 
         global death
+
+        global move
+
         #for every current event
         for event in events:
             # if the player quits quit the game
@@ -506,6 +518,7 @@ while not crashed:
                 hurtText = []
                 rect.move(400, 525)
 
+
                 if highScoreVal < scoreVal:
                     highScoreVal = scoreVal
                     highScore = medText.render('High Score: '+ str(highScoreVal), True, (255, 255, 255))
@@ -519,8 +532,32 @@ while not crashed:
 
                 #Reset Game
                 dead = False
+        print move
+        if move != 0:
+            #resetting all the values the gameloop uses
+            health = 3
+            enemybullets = []
+            bullets = []
+            stars = []
+            enemies = []
+            points = []
+            hurtText = []
+            rect.move(400, 525)
 
 
+            if highScoreVal < scoreVal:
+                highScoreVal = scoreVal
+                highScore = medText.render('High Score: '+ str(highScoreVal), True, (255, 255, 255))
+
+            scoreVal = 0
+            score = largeText.render('Score: '+str(scoreVal), True, (255, 255, 255))
+
+            enemySpawnChance = 0.01
+            moveLeft = False
+            moveRight = False
+
+            #Reset Game
+            dead = False
         #clears the screen
         gameDisplay.fill((0, 0, 0))
 
