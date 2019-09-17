@@ -14,8 +14,8 @@ pygame.display.set_caption('GALLAGA CLONE')
 clock = pygame.time.Clock()
 
 #SETS UP SERIAL INPUT /CHANGE PER USB PORT
-ser = serial.Serial('/dev/tty.usbserial-A5027LAV')
-ser.flushInput()
+#ser = serial.Serial('/dev/tty.usbserial-A5027LAV')
+#ser.flushInput()
 
 
 # PLAYER RECT OBJECT
@@ -176,7 +176,7 @@ def takeInput():
         try:
             #read serial input in
             ser_bytes = ser.readline()
-            print ser_bytes
+            print(ser_bytes)
             #weird ser input so just taking the 2nd character from the serial input line
             decoded_bytes = int(ser_bytes)
 
@@ -235,7 +235,7 @@ while not crashed:
     if(not dead):
 
         # distinguishing move as a global variable
-        global move
+        #global move
 
         # reads the move that the thread has been updating
         # if serial thread reads input from the controller it will update the integer move
@@ -315,7 +315,7 @@ while not crashed:
 
         # will spawn an enmey ( if the spawn chance is greater then a random number )
         # maximum amount of enemies spawned is 20
-        if(enemySpawnChance >= random.random() and len(enemies) < 20):
+        if(enemySpawnChance >= random.random() and len(enemies) < (scoreVal / 100) + 2):
             enemySpawn()
 
 #--------------------------------------- Bullet Movement -----------------------------------------------#
@@ -498,7 +498,7 @@ while not crashed:
 
         global death
 
-        global move
+        #global move
 
         #for every current event
         for event in events:
@@ -532,7 +532,7 @@ while not crashed:
 
                 #Reset Game
                 dead = False
-        print move
+        print(move)
         if move != 0:
             #resetting all the values the gameloop uses
             health = 3
