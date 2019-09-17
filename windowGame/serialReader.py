@@ -9,7 +9,7 @@ import threading
 
 ## PYGAME SET UP ##
 pygame.init()
-gameDisplay = pygame.display.set_mode((800,600))
+gameDisplay = pygame.display.set_mode((1000,800))
 pygame.display.set_caption('GALLAGA CLONE')
 clock = pygame.time.Clock()
 
@@ -19,8 +19,8 @@ clock = pygame.time.Clock()
 
 
 # PLAYER RECT OBJECT
-rect = pygame.rect.Rect((400, 525, 25, 25))
-pygame.draw.rect(gameDisplay, (0, 0, 0), (64, 54, 18, 18))
+rect = pygame.rect.Rect((400, 700, 25, 25))
+pygame.draw.rect(gameDisplay, (0, 0, 0), (64, 54, 25, 25))
 
 
 
@@ -33,7 +33,7 @@ health = 3
 scoreVal = 0
 #change these variables to desired gameplay
 numBulletsOutAtTime = 5
-bulletSpeed = 15
+bulletSpeed = 25
 starSpeed = 20
 enemyBulletSpeed = 5
 enemySpawnChance = 0.01
@@ -48,9 +48,9 @@ heartImg = pygame.image.load('heart.png')
 heartImg = pygame.transform.scale(heartImg, (60, 60))
 
 badGuy = pygame.image.load('badGuy.png')
-badGuy = pygame.transform.scale(badGuy, (40, 40))
+badGuy = pygame.transform.scale(badGuy, (50, 50))
 spaceShip = pygame.image.load('SpaceShip.png')
-spaceShip = pygame.transform.scale(spaceShip, (50, 50))
+spaceShip = pygame.transform.scale(spaceShip, (70, 70))
 #------------______________-------------#
 
 
@@ -67,7 +67,7 @@ tryAgain = largeText.render('press any button to Start Over', True, (255, 255 ,2
 score = largeText.render('Score: 0', True, (255, 255, 255))
 textrect = score.get_rect()
 
-textrect.move_ip(550, 30)
+textrect.move_ip(700, 30)
 #------------_________________-------------#
 
 
@@ -96,7 +96,7 @@ class Bullet:
 
     def __init__(self, posx, posy, speed):
             rect = pygame.rect.Rect((posx+30, posy, 4, 25))
-            self.rect = pygame.draw.rect(gameDisplay, (0, 250, 0), (posx+10, posy, 4, 25))
+            self.rect = pygame.draw.rect(gameDisplay, (0, 250, 0), (posx+10, posy, 4, 26))
             self.speed = speed
 
     def move(self):
@@ -109,8 +109,8 @@ class Bullet:
 class Star:
 
     def __init__(self, posx, posy, speed):
-            rect = pygame.rect.Rect((random.random()*800, 0, 4, 25))
-            self.rect = pygame.draw.rect(gameDisplay, (255, 255, 255), (random.random()*800, 0, 5,5))
+            rect = pygame.rect.Rect((random.random()*1000, 0, 4, 25))
+            self.rect = pygame.draw.rect(gameDisplay, (255, 255, 255), (random.random()*1000, 0, 5,5))
             self.speed = speed
 
     def move(self):
@@ -121,8 +121,8 @@ class Star:
 
 class Enemy:
     def __init__(self, posx, posy, furthestYposition):
-            rect = pygame.rect.Rect((random.random()*800, 0, 25, 25))
-            self.rect = pygame.draw.rect(gameDisplay, (255, 0, 0), (random.random()*800, 0, 25,25))
+            rect = pygame.rect.Rect((random.random()*1000, 0, 25, 25))
+            self.rect = pygame.draw.rect(gameDisplay, (255, 0, 0), (random.random()*1000, 0, 30,30))
             self.shootChance = 0.01
             self.furthestYposition = furthestYposition
 
@@ -136,7 +136,7 @@ class Enemy:
                 enemybullets.append(EnemyBullet(self.rect.left, self.rect.top, enemyBulletSpeed))
             if(self.right):
                 self.rect.move_ip(3, 0)
-                if(self.rect.left > 775):
+                if(self.rect.left > 975):
                     self.right = False
             else:
                 self.rect.move_ip(-3, 0)
@@ -211,7 +211,7 @@ def shoot():
 #spawns a star in a random x position at the top of the screen
 #adds star to the star list
 def starSpawn():
-    stars.append(Star(random.random()*800, 0, starSpeed))
+    stars.append(Star(random.random()*1000, 0, starSpeed))
 
 
 #spawns an enemy in a random x position at the top of the screen
@@ -257,7 +257,7 @@ while not crashed:
             shoot()
             move = 0
         #if the move is equal to 3 and the player is not outside of the screen
-        elif(move == 3 and rect.left < 775):
+        elif(move == 3 and rect.left < 975):
             # moves the player 7 pixels to the right
             rect.move_ip(7,0)
             move = 0
@@ -297,7 +297,7 @@ while not crashed:
             # the player will move 7 pixels to the left of the screen
             rect.move_ip(-7, 0)
         #if the move Right boolean is True and the player is not outside of the screen
-        elif(moveRight and rect.left < 775):
+        elif(moveRight and rect.left < 975):
             # the player will move 7 pixels to the right of the screen
             rect.move_ip(7, 0)
 
@@ -310,7 +310,7 @@ while not crashed:
 
         # will spawn a star ( if the spawn chance is greater then a random number )
         # maximum amount of stars spawned is 10
-        if(starSpawnChance > random.random() and len(stars) < 10):
+        if(starSpawnChance > random.random() and len(stars) < 20):
             starSpawn()
 
         # will spawn an enmey ( if the spawn chance is greater then a random number )
@@ -342,7 +342,7 @@ while not crashed:
             #draw the bullet
             pygame.draw.rect(gameDisplay,(255, 0, 0), eBullet.rect)
             #if the bullet moves past the bottom of the screen
-            if(eBullet.rect.top > 600):
+            if(eBullet.rect.top > 800):
                 #rip the bulllet out of the list
                 enemybullets.remove(eBullet)
                 #take the bullet out back and kill it from memory
@@ -377,7 +377,7 @@ while not crashed:
                 #if the bullet intersects the enemy
 
 #--------------------------------------- Enemy Collision -----------------------------------------------#
-                if(bullet.rect.left < enemy.rect.left+35 and bullet.rect.left+5 > enemy.rect.left and bullet.rect.top < enemy.rect.top+35 and bullet.rect.top > enemy.rect.top):
+                if(bullet.rect.left < enemy.rect.left+50 and bullet.rect.left+5 > enemy.rect.left and bullet.rect.top < enemy.rect.top+40 and bullet.rect.top > enemy.rect.top):
                     #increase the spawn chance of the new enemies
                     enemySpawnChance += 0.002
                     #spawn a new text that says +10
@@ -448,9 +448,9 @@ while not crashed:
             #move the star down
             star.move()
             #if the star is off the bottom of the screen
-            if(star.rect.top > 600):
+            if(star.rect.top > 800):
                 #put it back to the top of the screen
-                star.rect.move_ip(0, -620)
+                star.rect.move_ip(0, -820)
 
             #draw the star on the screen
             pygame.draw.rect(gameDisplay,(255, 255, 255), star.rect)
