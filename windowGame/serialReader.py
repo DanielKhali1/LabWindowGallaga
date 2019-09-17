@@ -9,8 +9,10 @@ gameDisplay = pygame.display.set_mode((800,600))
 pygame.display.set_caption('windowBoi')
 clock = pygame.time.Clock()
 currentAction = 0
-ser = serial.Serial('/dev/tty.usbmodem14101')
-ser.flushInput()
+#ser = serial.Serial('/dev/tty.usbmodem14101')
+#ser.flushInput()
+
+highScoreVal = 0
 
 move = 0
 
@@ -48,6 +50,8 @@ moveRight = False
 
 enemySpawnChance = 0.01
 
+
+
 scoreText = pygame.font.Font('freesansbold.ttf', 20)
 killedEnemy = scoreText.render('+10', True, (255, 247, 0))
 
@@ -56,9 +60,21 @@ wasHurtTextRender = scoreText.render('- <3', True, (255, 0, 0))
 
 
 largeText = pygame.font.Font('freesansbold.ttf',30)
+
+medText = pygame.font.Font('freesansbold.ttf',24)
+
 score = largeText.render('Score: 0', True, (255, 255, 255))
+
+highScore = medText.render('High Score: '+ str(highScoreVal), True, (255, 255, 255))
+
+
+youLost = largeText.render('YOU LOST', True, (255, 255, 255))
+tryAgain = largeText.render('press any button to Start Over', True, (255, 255 ,255))
+
 textrect = score.get_rect()
 textrect.move_ip(550, 30)
+
+dead = True
 
 #print "3"
 
@@ -190,17 +206,15 @@ def enemySpawn():
 t1 = threading.Thread(target=takeInput, args=())
 t1.start()
 #t1.join()
-dead = False
 
 
 while not crashed:
     events = pygame.event.get()
 
-
     if(not dead):
 
         global move
-        print move
+        #print move
 
         if(move == 1 and rect.left > 0):
             rect.move_ip(-7, 0)
@@ -283,6 +297,8 @@ while not crashed:
             continued = False
             for bullet in bullets:
                 if(bullet.rect.left < enemy.rect.left+35 and bullet.rect.left+5 > enemy.rect.left and bullet.rect.top < enemy.rect.top+35 and bullet.rect.top > enemy.rect.top):
+                    enemySpawnChance += 0.002
+                    print enemySpawnChance
                     temprect = killedEnemy.get_rect().move(enemy.rect.left, enemy.rect.top)
                     points.append(temprect)
                     bullets.remove(bullet)
@@ -332,18 +348,25 @@ while not crashed:
 
             pygame.draw.rect(gameDisplay,(255, 255, 255), star.rect)
 
+        #score = largeText.render('Score: '+str(scoreVal), True, (255, 255, 255))
+        gameDisplay.blit(highScore, (textrect.left, textrect.top+40))
         gameDisplay.blit(score, textrect)
 
         if health > 0:
             gameDisplay.blit(heartImg, (30, 15))
         else:
-            crashed = True
+            #crashed = True
             dead = True
             print("Player Died")
         if health > 1:
             gameDisplay.blit(heartImg, (70, 15))
         if health > 2:
             gameDisplay.blit(heartImg, (110, 15))
+
+        if highScoreVal < scoreVal:
+            highScoreVal = scoreVal
+            highScore = medText.render('High Score: ' + str(highScoreVal), True, (255, 255, 255))
+            gameDisplay.blit(highScore, (textrect.left, textrect.top+40))
 
 
 
@@ -353,6 +376,67 @@ while not crashed:
         pygame.display.update()
 
         clock.tick(40)
+
+    else:
+
+
+        global death
+
+        for event in events:
+            if event.type == pygame.QUIT:
+                    crashed = True
+
+            if event.type == pygame.KEYDOWN:
+                health = 3
+                enemybullets = []
+                bullets = []
+                stars = []
+                enemies = []
+                points = []
+                hurtText = []
+                rect.move(400, 525)
+
+                if highScoreVal < scoreVal:
+                    highScoreVal = scoreVal
+                    highScore = medText.render('High Score: '+ str(highScoreVal), True, (255, 255, 255))
+
+
+                scoreVal = 0
+                score = largeText.render('Score: '+str(scoreVal), True, (255, 255, 255))
+
+
+                enemySpawnChance = 0.01
+                moveLeft = False
+                moveRight = False
+
+                #Reset Game
+                dead = False
+
+
+
+        gameDisplay.fill((0, 0, 0))
+
+        if highScoreVal < scoreVal:
+            highScoreVal = scoreVal
+            highScore = medText.render('High Score: '+ str(highScoreVal), True, (255, 255, 255))
+
+        gameDisplay.blit(score, textrect)
+        gameDisplay.blit(highScore, (textrect.left, textrect.top+40))
+
+
+
+        lost_rect = youLost.get_rect()
+        lost_rect = lost_rect.move(315, 250)
+        gameDisplay.blit(youLost, lost_rect)
+
+        gameDisplay.blit(tryAgain, tryAgain.get_rect().move(175, 350))
+
+        pygame.display.update()
+
+
+
+
+
 
 pygame.display.quit()
 pygame.quit()
