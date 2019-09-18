@@ -1,4 +1,4 @@
-# LabWindowGallaga
+# ECSSE Lab Window Gallaga
 
 ## Reqs
 - python3
