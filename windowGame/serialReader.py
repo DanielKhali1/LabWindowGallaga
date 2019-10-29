@@ -568,7 +568,7 @@ while not crashed:
 
         #draws score to screen
         gameDisplay.blit(score, textrect)
-        #draws highscore to screen
+        #draws highscore to scree
         gameDisplay.blit(highScore, (textrect.left, textrect.top+40))
 
         #draws "you lost" to screen
