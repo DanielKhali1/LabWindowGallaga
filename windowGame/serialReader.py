@@ -22,6 +22,9 @@ clock = pygame.time.Clock()
 rect = pygame.rect.Rect((400, 700, 25, 25))
 pygame.draw.rect(gameDisplay, (0, 0, 0), (64, 54, 25, 25))
 
+idle = False
+idleTicks = 1
+maxIdleTime = 5
 
 
 #------------__GAME ATTRIBUTES__-------------#
@@ -224,15 +227,19 @@ def enemySpawn():
 t1 = threading.Thread(target=takeInput, args=())
 t1.start()
 
-
+start_ticks = pygame.time.get_ticks()
 #--------------------------------------- GAME LOOP -----------------------------------------------#
 while not crashed:
     # will grab all of the current active events that pygame has detected
     # need this to check for inputs, and quiting from the program
     events = pygame.event.get()
-
     # actual Gameplay loop will run if the player is not dead
-    if(not dead):
+
+    seconds = (pygame.time.get_ticks() - start_ticks) / 1000
+
+    if(not dead or seconds > maxIdleTime):
+
+
 
         # distinguishing move as a global variable
         #global move
@@ -274,13 +281,18 @@ while not crashed:
                 if event.key == pygame.K_a:
                     # player will start moving left
                     moveLeft = True
+                    start_ticks = pygame.time.get_ticks()
                 #if the user presses the D key
                 if event.key == pygame.K_d:
                     # player will start moving right
                     moveRight = True
+                    start_ticks = pygame.time.get_ticks()
+
                 #if the user presses the Spacebar
                 if event.key == pygame.K_SPACE:
                     # player will shoot
+                    start_ticks = pygame.time.get_ticks()
+
                     shoot()
             # once the player releases the key they pressed before
             if event.type == pygame.KEYUP:
@@ -292,6 +304,17 @@ while not crashed:
                 if event.key == pygame.K_d:
                     # player will stop moving right
                     moveRight = False
+
+        seconds = (pygame.time.get_ticks() - start_ticks) / 1000
+        if seconds > maxIdleTime:
+            action = random.random()
+            if action < 0.2:
+                shoot()
+            elif action < 0.6 and rect.left > 0:
+                rect.move_ip(-7, 0)
+            elif action < 1 and rect.left < 975:
+                rect.move_ip(7, 0)
+
         #if the move Left boolean is True and the player is not outside of the screen
         if(moveLeft and rect.left > 0):
             # the player will move 7 pixels to the left of the screen
@@ -310,12 +333,16 @@ while not crashed:
 
         # will spawn a star ( if the spawn chance is greater then a random number )
         # maximum amount of stars spawned is 10
+
+        if dead:
+            gameDisplay.blit(tryAgain, tryAgain.get_rect().move(200, 350))
+
         if(starSpawnChance > random.random() and len(stars) < 20):
             starSpawn()
 
         # will spawn an enmey ( if the spawn chance is greater then a random number )
         # maximum amount of enemies spawned is 20
-        if(enemySpawnChance >= random.random() and len(enemies) < (scoreVal / 100) + 2):
+        if(enemySpawnChance >= random.random() and len(enemies) < (scoreVal / 100) + 2 and len(enemies) < 20):
             enemySpawn()
 
 #--------------------------------------- Bullet Movement -----------------------------------------------#
@@ -389,7 +416,8 @@ while not crashed:
                     #kill the bullet from memory
                     del bullet
                     #add to the score because you just killed the enemy
-                    scoreVal += 10
+                    if not dead:
+                        scoreVal += 10
                     #re-render the text with the updated score
                     score = largeText.render('Score: '+str(scoreVal), True, (255, 255, 255))
                     #now actually remove the enemy from the list
@@ -479,7 +507,7 @@ while not crashed:
 
         # if the highscore is < then current score
         #update the highscore with the current score
-        if highScoreVal < scoreVal:
+        if highScoreVal < scoreVal and not dead:
             highScoreVal = scoreVal
             highScore = medText.render('High Score: ' + str(highScoreVal), True, (255, 255, 255))
             gameDisplay.blit(highScore, (textrect.left, textrect.top+40))
@@ -507,7 +535,7 @@ while not crashed:
                     crashed = True
 
             # if the player presses a button the game will reset
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN or seconds > maxIdleTime:
                 #resetting all the values the gameloop uses
                 health = 3
                 enemybullets = []
